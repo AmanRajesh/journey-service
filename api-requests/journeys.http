@@ -1,0 +1,13 @@
+### Start a new Journey
+POST http://localhost:8080/api/v1/journeys/start
+Content-Type: application/json
+
+{
+  "vehicleType": "Truck",
+  "destination": "Bangalore"
+}
+
+###
+
+### End a Journey (Replace the UUID)
+POST http://localhost:8080/api/v1/journeys/5602989b-78ad-42e6-8c0b-af374e5ba9fb/end
