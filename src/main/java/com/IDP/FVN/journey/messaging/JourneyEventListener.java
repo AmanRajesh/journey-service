@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class JourneyEventListener {
 
     // This annotation tells Spring to constantly listen to this exact topic
-    @KafkaListener(topics = "journey-events", groupId = "for-loop-group")
+    @KafkaListener(topics = "journey-events", groupId = "fvn-group")
     public void consumeJourneyEvent(String message) {
 
         // In a fully finished app, this is where you would write code to

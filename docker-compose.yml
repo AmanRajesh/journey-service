@@ -35,16 +35,27 @@ services:
     build: .
     container_name: fvn-journey-service
     ports:
-      - "8080:8080"
+      - "8089:8080"
     depends_on:
       - postgres
       - redis
       - kafka
     environment:
+      # Postgres Config
       - SPRING_R2DBC_URL=r2dbc:postgresql://fvn-postgres:5432/fogvision_db
       - SPRING_R2DBC_USERNAME=postgres
       - SPRING_R2DBC_PASSWORD=password
+      # Redis Config
       - SPRING_DATA_REDIS_HOST=fvn-redis
+      # Kafka Config (THIS IS WHAT YOU WERE MISSING!)
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=fvn-kafka:9092
+      - SPRING_KAFKA_CONSUMER_GROUP_ID=fvn-group
+      # --- FLYWAY CONFIGURATION ---
+      - SPRING_FLYWAY_ENABLED=true
+      - SPRING_FLYWAY_URL=jdbc:postgresql://fvn-postgres:5432/fogvision_db
+      - SPRING_FLYWAY_USER=postgres
+      - SPRING_FLYWAY_PASSWORD=password
+      - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
 
   # --- UI For Postgres ---
   pg-adminer:

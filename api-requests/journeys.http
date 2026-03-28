@@ -1,5 +1,5 @@
 ### Start a new Journey
-POST http://localhost:8080/api/v1/journeys/start
+POST http://localhost:8089/api/v1/journeys/start
 Content-Type: application/json
 
 {
@@ -10,4 +10,4 @@ Content-Type: application/json
 ###
 
 ### End a Journey (Replace the UUID)
-POST http://localhost:8080/api/v1/journeys/5602989b-78ad-42e6-8c0b-af374e5ba9fb/end
+POST http://localhost:8089/api/v1/journeys/86349b02-b22c-4bdc-aa2b-74f7a3c47e77/end
