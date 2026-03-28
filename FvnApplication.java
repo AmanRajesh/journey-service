@@ -1,11 +1,18 @@
 package com.IDP.FVN;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootApplication
-public class FvnApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(FvnApplication.class, args);
+// We provide dummy properties here so the context loads successfully
+// even without Docker environment variables present!
+@SpringBootTest(properties = {
+        "spring.kafka.bootstrap-servers=localhost:9092",
+        "spring.flyway.enabled=false"
+})
+class FvnApplicationTests {
+
+    @Test
+    void contextLoads() {
     }
+
 }

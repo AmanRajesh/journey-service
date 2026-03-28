@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: fogvision_db
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine # Smallest version
@@ -91,3 +93,5 @@ services:
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092 # Make sure 'kafka' matches your actual Kafka service name!
     depends_on:
       - kafka # Make sure this matches your Kafka service name
+volumes:
+  pgdata:

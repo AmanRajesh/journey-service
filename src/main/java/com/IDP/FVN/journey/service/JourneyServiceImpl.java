@@ -55,7 +55,7 @@ public class JourneyServiceImpl implements JourneyService {
                 .set("journey:" + sessionId, activeJourney, Duration.ofHours(24))
                 .doOnSuccess(saved -> {
                     // Publish the Kafka event ONLY if Redis save was successful
-//                    eventProducer.publishJourneyStarted(sessionId, request.vehicleType());
+                    eventProducer.publishJourneyStarted(sessionId, request.vehicleType());
                 })
                 .thenReturn(new JourneyResponse(sessionId, "STARTED", "Journey successfully initiated."));
     }
