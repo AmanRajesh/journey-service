@@ -11,7 +11,11 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
+import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import javax.crypto.SecretKey;
+import java.util.Date;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -38,11 +42,25 @@ public class JourneyServiceImpl implements JourneyService {
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
     }
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    // 2. Helper method to generate the token
+    private String generateToken(String sessionId, String vehicleType) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        return Jwts.builder()
+                .subject(sessionId)                      // The core identity
+                .claim("vehicleType", vehicleType)       // Extra metadata
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 hours
+                .signWith(key)
+                .compact();
+    }
 
     @Override
     public Mono<JourneyResponse> startJourney(JourneyStartRequest request) {
         String sessionId = UUID.randomUUID().toString();
-
+        String token = generateToken(sessionId, request.vehicleType());
         ActiveJourney activeJourney = new ActiveJourney(
                 sessionId,
                 request.vehicleType(),
@@ -57,7 +75,7 @@ public class JourneyServiceImpl implements JourneyService {
                     // Publish the Kafka event ONLY if Redis save was successful
                     eventProducer.publishJourneyStarted(sessionId, request.vehicleType());
                 })
-                .thenReturn(new JourneyResponse(sessionId, "STARTED", "Journey successfully initiated."));
+                .thenReturn(new JourneyResponse(sessionId, token,"STARTED", "Journey successfully initiated."));
     }
 
     @Override
@@ -92,11 +110,11 @@ public class JourneyServiceImpl implements JourneyService {
 
                             // STEP 5: Broadcast to Kafka using your custom producer
                             .doOnSuccess(deleted -> {
-                                eventProducer.publishJourneyEnded(sessionId);
+                                eventProducer.publishJourneyEnded(sessionId, activeJourney.vehicleType());
                             })
 
                             // STEP 6: Return your clean JourneyResponse
-                            .thenReturn(new JourneyResponse(sessionId, "ENDED", "Journey archived to Postgres and terminated."));
+                            .thenReturn(new JourneyResponse(sessionId,null, "ENDED", "Journey archived to Postgres and terminated."));
                 });
     }
 }

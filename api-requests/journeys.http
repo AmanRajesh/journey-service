@@ -3,11 +3,11 @@ POST http://localhost:8089/api/v1/journeys/start
 Content-Type: application/json
 
 {
-  "vehicleType": "Truck",
+  "vehicleType": "truck",
   "destination": "Bangalore"
 }
 
 ###
 
 ### End a Journey (Replace the UUID)
-POST http://localhost:8089/api/v1/journeys/77ce7f90-307d-4d03-b78c-054ae36611f6/end
+POST http://localhost:8089/api/v1/journeys/2162d024-42a3-42cf-8286-063b71913cb5/end

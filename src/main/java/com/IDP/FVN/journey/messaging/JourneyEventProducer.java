@@ -41,17 +41,18 @@ public class JourneyEventProducer {
         }
     }
 
-    public void publishJourneyEnded(String sessionId) {
+    public void publishJourneyEnded(String sessionId, String vehicleType) { // Add vehicleType parameter
         try {
             Map<String, Object> eventPayload = Map.of(
                     "eventType", "JOURNEY_ENDED",
                     "sessionId", sessionId,
+                    "vehicleType", vehicleType, // Include this for the Location Service consumer
                     "timestamp", Instant.now().toString()
             );
 
             String message = objectMapper.writeValueAsString(eventPayload);
             kafkaTemplate.send(TOPIC, sessionId, message);
-            System.out.println("✅ Broadcasted: " + message);
+            System.out.println("✅ Broadcasted End Event: " + message);
 
         } catch (Exception e) {
             System.err.println("❌ Failed to broadcast end event: " + e.getMessage());

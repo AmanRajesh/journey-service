@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/v1/journeys")
-@CrossOrigin(origins = "*")
+
 public class JourneyController {
 
     private final JourneyService journeyService;

@@ -1,7 +1,19 @@
 version: '3.8'
 services:
+  api-gateway:
+    image: nginx:alpine
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mounts the local nginx.conf into the container
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - fvn-network
+
+
   postgres:
-    image: postgres:15-alpine # Smallest version
+    image: postgres:15-alpine
     container_name: fvn-postgres
     environment:
       POSTGRES_USER: postgres
@@ -9,20 +21,26 @@ services:
       POSTGRES_DB: fogvision_db
     ports:
       - "5432:5432"
+    networks:
+      - fvn-network
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   redis:
-    image: redis:7-alpine # Smallest version
+    image: redis:7-alpine
     container_name: fvn-redis
     ports:
       - "6379:6379"
+    networks:
+      - fvn-network
 
   kafka:
     image: apache/kafka:3.7.0
     container_name: fvn-kafka
     ports:
       - "9092:9092"
+    networks:
+      - fvn-network
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -30,58 +48,57 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://fvn-kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      # FIXED: Using the container name instead of localhost
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@fvn-kafka:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
   journey-service:
     build: .
     container_name: fvn-journey-service
     ports:
       - "8089:8080"
+    networks:
+      - fvn-network
     depends_on:
       - postgres
       - redis
       - kafka
     environment:
-      # Postgres Config
       - SPRING_R2DBC_URL=r2dbc:postgresql://fvn-postgres:5432/fogvision_db
       - SPRING_R2DBC_USERNAME=postgres
       - SPRING_R2DBC_PASSWORD=password
-      # Redis Config
       - SPRING_DATA_REDIS_HOST=fvn-redis
-      # Kafka Config (THIS IS WHAT YOU WERE MISSING!)
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=fvn-kafka:9092
       - SPRING_KAFKA_CONSUMER_GROUP_ID=fvn-group
-      # --- FLYWAY CONFIGURATION ---
       - SPRING_FLYWAY_ENABLED=true
       - SPRING_FLYWAY_URL=jdbc:postgresql://fvn-postgres:5432/fogvision_db
       - SPRING_FLYWAY_USER=postgres
       - SPRING_FLYWAY_PASSWORD=password
       - SPRING_FLYWAY_BASELINE_ON_MIGRATE=true
 
-  # --- UI For Postgres ---
   pg-adminer:
     image: adminer:latest
     container_name: fvn-adminer
     restart: unless-stopped
     ports:
       - "8081:8080"
+    networks:
+      - fvn-network
     depends_on:
-      - postgres # Change this to whatever your Postgres service is actually named in the file
+      - postgres
 
-  # --- UI For Redis ---
   redis-ui:
     image: rediscommander/redis-commander:latest
     container_name: fvn-redis-ui
     restart: unless-stopped
     environment:
-      # Tells the UI exactly where to find your Redis container
-      - REDIS_HOSTS=local:redis:6379 # Change 'redis' to your exact Redis service name if different
+      - REDIS_HOSTS=local:fvn-redis:6379 # Fixed host name
     ports:
       - "8082:8081"
+    networks:
+      - fvn-network
     depends_on:
-      - redis # Change this to your exact Redis service name
-  # --- UI For Kafka ---
+      - redis
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: fvn-kafka-ui
@@ -90,8 +107,15 @@ services:
       - "8083:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092 # Make sure 'kafka' matches your actual Kafka service name!
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=fvn-kafka:9092 # Fixed host name
+    networks:
+      - fvn-network
     depends_on:
-      - kafka # Make sure this matches your Kafka service name
+      - kafka
+
 volumes:
   pgdata:
+
+networks:
+  fvn-network:
+    external: true
